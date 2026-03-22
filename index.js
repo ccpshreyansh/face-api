@@ -1,3 +1,13 @@
+const path = require('path');
+const fs = require('fs');
+
+const tfjsNodePath = path.join(__dirname, 'node_modules', '@tensorflow', 'tfjs-node');
+const dllPath = path.join(tfjsNodePath, 'deps', 'lib');
+
+if (process.platform === 'win32' && fs.existsSync(dllPath)) {
+  process.env.PATH = dllPath + path.delimiter + process.env.PATH;
+}
+
 require('@tensorflow/tfjs-node');
 const express = require("express");
 const multer = require("multer");
