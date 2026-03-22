@@ -1,14 +1,3 @@
-const path = require('path');
-const fs = require('fs');
-
-const tfjsNodePath = path.join(__dirname, 'node_modules', '@tensorflow', 'tfjs-node');
-const dllPath = path.join(tfjsNodePath, 'deps', 'lib');
-
-if (process.platform === 'win32' && fs.existsSync(dllPath)) {
-  process.env.PATH = dllPath + path.delimiter + process.env.PATH;
-}
-
-require('@tensorflow/tfjs-node');
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -139,34 +128,27 @@ async function startServer() {
   // Login / Verify Face (HIGH PERFORMANCE)
   app.post("/login", upload.single("image"), async (req, res) => {
     const startTime = Date.now();
-    console.log("--- Starting Recognition Scan ---");
     try {
       if (!req.file && !req.body.image) {
         return res.status(400).json({ error: "No image provided" });
       }
 
-      console.time("Step 1: Image Loading");
       const imageBuffer = req.file
         ? req.file.buffer
         : Buffer.from((req.body.image || '').replace(/^data:image\/\w+;base64,/, ""), "base64");
 
       const img = await canvas.loadImage(imageBuffer);
-      console.timeEnd("Step 1: Image Loading");
 
-      console.time("Step 2: Face Detection (Tiny)");
       // detect with Tiny Face Detector (FAST)
       const detection = await faceapi
         .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
         .withFaceDescriptor();
-      console.timeEnd("Step 2: Face Detection (Tiny)");
 
       if (!detection) {
-        console.log("No face detected in scan.");
         return res.status(400).json({ error: "No face detected" });
       }
 
-      console.time("Step 3: Matching Loop");
       const inputDescriptor = detection.descriptor;
 
       let bestMatch = null;
@@ -179,10 +161,9 @@ async function startServer() {
           bestMatch = userId;
         }
       }
-      console.timeEnd("Step 3: Matching Loop");
 
       const duration = Date.now() - startTime;
-      console.log(`--- Scan Complete: ${duration}ms ---`);
+      console.log(`[Backend-TinyFix] Recognition took ${duration}ms`);
 
       if (bestMatch) {
         res.json({ success: true, userId: bestMatch, time: duration });
